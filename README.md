@@ -1,5 +1,5 @@
 # CSV-Parser-with-LWC
-<img href="How to Build a Simple CSV Parser with Lightning Web Components.jpg">
+<img src="csvParserHeader.jpg" width="800" height="500">
 
 How to Build a Simple CSV Parser with Lightning Web Components
 
