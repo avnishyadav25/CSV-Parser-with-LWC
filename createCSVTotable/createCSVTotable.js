@@ -1,5 +1,25 @@
 import { LightningElement } from 'lwc';
 
+// Split one CSV line on commas, keeping "quoted, values" together and turning "" into ".
+// shortcut: a quoted value that spans several lines is not supported; use Papa Parse for that.
+function splitCSVLine(line) {
+    const fields = [];
+    let field = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (inQuotes) {
+            if (ch === '"' && line[i + 1] === '"') { field += '"'; i++; }
+            else if (ch === '"') inQuotes = false;
+            else field += ch;
+        } else if (ch === '"') inQuotes = true;
+        else if (ch === ',') { fields.push(field); field = ''; }
+        else field += ch;
+    }
+    fields.push(field);
+    return fields;
+}
+
 export default class CreateCSVTotable extends LightningElement {
     columns =[];
     data = [];
@@ -44,10 +64,11 @@ export default class CreateCSVTotable extends LightningElement {
 
     parseCSV(csv) {
         // parse the csv file and treat each line as one item of an array
-        const lines = csv.split(/\r\n|\n/);
+        // (blank lines, such as the one after a trailing newline, are skipped)
+        const lines = csv.split(/\r\n|\n/).filter((line) => line.trim() !== '');
         //console.log("#### lines = "+JSON.stringify(lines));
         // parse the first line containing the csv column headers
-        const headers = lines[0].split(',');
+        const headers = splitCSVLine(lines[0]);
         console.log("#### headers = "+JSON.stringify(headers));
         // iterate through csv headers and transform them to column format supported by the datatable
         this.columns = headers.map((header) => {
@@ -61,7 +82,7 @@ export default class CreateCSVTotable extends LightningElement {
           if (i === 0) return;
       
           const obj = {};
-          const currentline = line.split(',');
+          const currentline = splitCSVLine(line);
       
           for (let j = 0; j < headers.length; j++) {
             obj[headers[j]] = currentline[j];

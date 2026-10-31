@@ -30,9 +30,10 @@ It was written as the companion to my blog tutorial "How to Build a Simple CSV P
 lightning-input (file) ──onchange──▶ handleCSVUpload()   first selected file
                                      └─▶ read() ─▶ load()   FileReader.readAsText, wrapped in a Promise
                                                  └─▶ parseCSV()
-                                                       • split lines on \r\n or \n
+                                                       • split lines on \r\n or \n, skip blank lines
                                                        • line 1 → columns { label, fieldName }
                                                        • other lines → one object per row
+                                                       • fields split on commas outside "quotes"
                                                  └─▶ this.columns / this.data ─▶ lightning-datatable
 ```
 
@@ -42,7 +43,8 @@ Files:
 |---|---|
 | `createCSVTotable/createCSVTotable.html` | Card, file input and datatable |
 | `createCSVTotable/createCSVTotable.js` | File reading and CSV parsing |
-| `createCSVTotable/createCSVTotable.js-meta.xml` | API version 55.0, exposed to App/Home/Record pages |
+| `createCSVTotable/createCSVTotable.js-meta.xml` | API version 68.0 (Winter '27), exposed to App/Home/Record pages |
+| `createCSVTotable/__tests__/createCSVTotable.test.js` | Offline Jest test (see Tests) |
 
 ## Quick start
 
@@ -83,12 +85,29 @@ Use sample data when you try it; the file is only held in the browser tab.
 
 ## Limitations
 
-- Fields are split on every comma, so quoted values that contain commas (for example `"Acme, Inc."`) break the
-  columns. Use a real CSV parser (such as Papa Parse as a static resource) for production files.
-- A trailing newline at the end of the file shows up as an empty row.
+- Quoted values with commas (`"Acme, Inc."`) and escaped quotes (`""`) are handled, but a quoted value that spans
+  several lines is not. Use a real CSV parser (such as Papa Parse as a static resource) for production files.
+- Requires API version 68.0 (Winter '27) or later in the target org; use an older `apiVersion` for an older org.
 - The datatable's `key-field` is `Id`; files without an `Id` column have no unique row key.
 - Read errors are caught but not shown to the user.
 - Nothing is saved to Salesforce. To import, add an Apex method or the UI API to create records from `this.data`.
+
+## Tests
+
+```bash
+npm install
+npm test        # sfdx-lwc-jest, no org needed
+```
+
+The test mounts the component, uploads a small CSV through the file input and checks the datatable's columns and
+rows: header row, CRLF and LF line endings, a quoted field with a comma and an escaped quote, a UTF-8 BOM (removed
+by `FileReader`) and a trailing newline.
+
+`sfdx-lwc-jest` needs an `sfdx-project.json` at the root, so the repo has a minimal one whose package directory is
+`createCSVTotable/`. Because the component is not inside an `lwc/` folder, `jest.config.js` sets `roots` to that
+folder and the test imports the component by relative path instead of `c/createCSVTotable`. The deploy steps above
+are unchanged: copy the folder into your own project's `force-app/main/default/lwc/`. The `.forceignore` that
+`sf project generate` creates already skips `**/__tests__/**`, so the test folder is not deployed.
 
 ## Licence
 

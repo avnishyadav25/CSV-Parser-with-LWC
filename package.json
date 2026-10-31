@@ -1,0 +1,11 @@
+{
+  "name": "csv-parser-with-lwc",
+  "private": true,
+  "description": "CSV To Datatable Lightning Web Component, with offline Jest tests.",
+  "scripts": {
+    "test": "sfdx-lwc-jest"
+  },
+  "devDependencies": {
+    "@salesforce/sfdx-lwc-jest": "^7.9.0"
+  }
+}
